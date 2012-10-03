@@ -7,7 +7,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.template.context import Context
 from models import SnippetPtr
 
-class SnippetPlugin(CMSPluginBase):
+from admin_enhancer.admin import EnhancedAdminMixin ,EnhancedModelAdminMixin
+
+class SnippetPlugin(EnhancedModelAdminMixin,CMSPluginBase):
     model = SnippetPtr
     name = _("Snippet")
     render_template = "cms/plugins/snippet.html"

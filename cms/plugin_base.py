@@ -10,6 +10,12 @@ from django.forms.models import ModelForm
 from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
 
+#dm
+view_fields = getattr(settings,'CMSPLUGIN_EXTRA_FIELDSET',
+                      [('pl_disable','pl_span','pl_offset','pl_extra_style','pl_extra_class'),()])
+view_excluded = ['pl_color']
+view_option_fields = [item for sublist in view_fields for item in sublist]#dm:flat list of sublist
+
 class CMSPluginBaseMetaclass(forms.MediaDefiningClass):
     """
     Ensure the CMSPlugin subclasses have sane values and set some defaults if 
@@ -45,6 +51,8 @@ class CMSPluginBaseMetaclass(forms.MediaDefiningClass):
             }
             new_plugin.form = type('%sForm' % name, (ModelForm,), form_attrs)
         # Set the default fieldsets
+        #att_1 =new_plugin.model._meta.fields['span']
+        #dm:added field
         if not new_plugin.fieldsets:
             basic_fields = []
             advanced_fields = []
@@ -52,7 +60,10 @@ class CMSPluginBaseMetaclass(forms.MediaDefiningClass):
                 if not f.auto_created and f.editable:
                     if hasattr(f,'advanced'): 
                         advanced_fields.append(f.name)
-                    else: basic_fields.append(f.name)
+                    else:#dm
+                        if not f.name in view_option_fields + view_excluded:#dm:filter
+                            basic_fields.append(f.name)
+                        #was only:  basic_fields.append(f.name)
             if advanced_fields:
                 new_plugin.fieldsets = [
                     (
@@ -67,8 +78,38 @@ class CMSPluginBaseMetaclass(forms.MediaDefiningClass):
                             'fields' : advanced_fields, 
                             'classes' : ('collapse',)
                         }
+                    ),
+                    (#dm:
+                        _('View options'),
+                            {
+                            'fields' : view_fields,
+                            'classes' : ('collapse',)
+                        }
                     )
                 ]
+            else:#dm:added new
+                new_plugin.fieldsets = [
+                    (
+                        None,
+                            {
+                            'fields': basic_fields
+                        }
+                        ),
+                    (
+                        _('View options'),
+                            {
+                            'fields' : view_fields,
+                            'classes' : ('collapse',)
+                        }
+                    )
+                ]
+        else:
+            #dm:added new
+            new_tupla = ( _('View options'),  { 'fields' : view_fields, 'classes' : ('collapse',) } )
+            try:#TO DO: verificare
+                new_plugin.fieldsets = new_plugin.fieldsets + [ new_tupla ]
+            except:
+                new_plugin.fieldsets = new_plugin.fieldsets + ( new_tupla, )
         # Set default name
         if not new_plugin.name:
             new_plugin.name = get_verbose_name(new_plugin.__name__)
@@ -148,6 +189,10 @@ class CMSPluginBase(admin.ModelAdmin):
         if getattr(self, "cms_plugin_instance"):
             # assign stuff to object
             fields = self.cms_plugin_instance._meta.fields
+            #dm: added fields save
+            fields_exclude = view_option_fields
+            fields = [ i for i in fields if not i.attname in fields_exclude ]
+
             for field in fields:
                 # assign all the fields - we can do this, because object is
                 # subclassing cms_plugin_instance (one to one relation)

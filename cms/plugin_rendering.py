@@ -55,7 +55,7 @@ def render_plugin(context, instance, placeholder, template, processors=None,
     else:
         content = ''
     for processor in iterload_objects(settings.CMS_PLUGIN_PROCESSORS):
-        content = processor(instance, placeholder, content, context)
+        content = processor(instance, placeholder, content, context, current_app)#dm:added current_app
     for processor in processors:
         content = processor(instance, placeholder, content, context)
     for processor in DEFAULT_PLUGIN_PROCESSORS:
