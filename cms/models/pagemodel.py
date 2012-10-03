@@ -21,6 +21,7 @@ from menus.menu_pool import menu_pool
 from mptt.models import MPTTModel
 from os.path import join
 import copy
+from cms.models.page_placeholder import PagePlaceholder#dm
 
 
 class Page(MPTTModel):
@@ -80,7 +81,7 @@ class Page(MPTTModel):
     limit_visibility_in_menu = models.SmallIntegerField(_("menu visibility"), default=None, null=True, blank=True, choices=LIMIT_VISIBILITY_IN_MENU_CHOICES, db_index=True, help_text=_("limit when this page is visible in the menu"))
 
     # Placeholders (plugins)
-    placeholders = models.ManyToManyField(Placeholder, editable=False)
+    placeholders = models.ManyToManyField(Placeholder, editable=False, through=PagePlaceholder)#dm
 
     # Publisher fields
 
@@ -1077,7 +1078,13 @@ class Page(MPTTModel):
         for placeholder_name in placeholders:
             if not placeholder_name in found:
                 placeholder = Placeholder.objects.create(slot=placeholder_name)
-                self.placeholders.add(placeholder)
+                try:#dm:added
+                    self.placeholders.add(placeholder) # dm:original
+                except :# dm:thought many2many
+                    from .page_placeholder import PagePlaceholder
+                    pageplaceholder = PagePlaceholder(placeholder=placeholder,page=self)
+                    pageplaceholder.save()
+                    pass
                 found[placeholder_name] = placeholder
 
 

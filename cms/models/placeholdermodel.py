@@ -97,11 +97,11 @@ class Placeholder(models.Model):
                 yield rel.field
 
     def _get_attached_field(self):
-        from cms.models import CMSPlugin
+        from cms.models import CMSPlugin , PagePlaceholder #dm:added
         if not hasattr(self, '_attached_field_cache'):
             self._attached_field_cache = None
             for rel in self._meta.get_all_related_objects():
-                if issubclass(rel.model, CMSPlugin):
+                if issubclass(rel.model, CMSPlugin) or issubclass(rel.model, PagePlaceholder):#dm:added after or
                     continue
                 field = getattr(self, rel.get_accessor_name())
                 if field.count():
@@ -115,8 +115,9 @@ class Placeholder(models.Model):
         return None
 
     def _get_attached_model(self):
+        from cms.models import CMSPlugin , PagePlaceholder #dm:added
         field = self._get_attached_field()
-        if field:
+        if field and not issubclass(field.model, PagePlaceholder): #dm:added after and
             return field.model
         return None
 

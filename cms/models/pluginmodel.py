@@ -61,7 +61,7 @@ class PluginModelBase(MPTTModelBase):
 
         return new_class
 
-
+from colors.fields import ColorField
 class CMSPlugin(MPTTModel):
     '''
     The base class for a CMS plugin model. When defining a new custom plugin, you should
@@ -77,6 +77,15 @@ class CMSPlugin(MPTTModel):
     __metaclass__ = PluginModelBase
 
     placeholder = models.ForeignKey(Placeholder, editable=False, null=True)
+    #dm:added
+    pl_span = models.PositiveSmallIntegerField(_("span"), blank=True, null=True, editable=True)
+    pl_offset = models.PositiveSmallIntegerField(_("offset"), blank=True, null=True, editable=True)
+
+    pl_disable = models.BooleanField(_("disable"), default=False)
+    pl_color  = ColorField(_("color box"), blank=True, null=True, editable=True)
+    pl_extra_style = models.CharField( _("style extra"), max_length=100, blank=True )
+    pl_extra_class = models.CharField( _("class extra"), max_length=100, blank=True )
+    #
     parent = models.ForeignKey('self', blank=True, null=True, editable=False)
     position = models.PositiveSmallIntegerField(_("position"), blank=True, null=True, editable=False)
     language = models.CharField(_("language"), max_length=15, blank=False, db_index=True, editable=False)
@@ -175,7 +184,7 @@ class CMSPlugin(MPTTModel):
                     raise ValidationError("plugin has no render_template: %s" % plugin.__class__)
             else:
                 template = None
-            return render_plugin(context, instance, placeholder, template, processors)
+            return render_plugin(context, instance, placeholder, template, processors, admin)#dm:added admin
         return ""
 
     def get_media_path(self, filename):
