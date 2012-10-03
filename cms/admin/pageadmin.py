@@ -437,7 +437,16 @@ class PageAdmin(ModelAdmin):
                             bases[int(plugin.cmsplugin_ptr_id)].set_base_attr(plugin)
                             plugin_list.append(plugin)
                 else:
-                    placeholder, created = obj.placeholders.get_or_create(slot=placeholder_name)
+                    try:#dm:: added
+                        placeholder, created = obj.placeholders.get_or_create(slot=placeholder_name)
+                    except Exception:
+                        print "Passaggio modificazione intermediata dall Many2many thought di PagePlaceholder"
+                        try:
+                            placeholder = obj.placeholders.get(slot=placeholder_name)
+                        except Exception:
+                            placeholder = Placeholder(slot=placeholder_name)
+                            placeholder.save()
+
                     installed_plugins = plugin_pool.get_all_plugins(placeholder_name, obj)
                     plugin_list = CMSPlugin.objects.filter(language=language, placeholder=placeholder, parent=None).order_by('position')
                     other_plugins = CMSPlugin.objects.filter(placeholder=placeholder, parent=None).exclude(language=language)
@@ -1470,3 +1479,13 @@ contribute_fieldsets(PageAdmin)
 contribute_list_filter(PageAdmin)
 
 admin.site.register(Page, PageAdmin)
+#dm:added
+from cms.models.page_placeholder import *
+class PlaceholderAdminExt(admin.ModelAdmin):
+    list_display = ['slot','default_width',]
+    fields = ['slot','default_width',]
+
+admin.site.register(PagePlaceholder)
+#admin.site.register(Placeholder,PlaceholderAdminExt)
+
+
